@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import '../styles/dashboard.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -17,7 +18,8 @@ export default function Login() {
     setSubmitting(true);
     try {
       const res = await api.post('/auth/login', { email, password });
-      const { token, user, pharmacy_id } = res.data;
+      const { token, user } = res.data;
+      const pharmacy_id = user?.pharmacy_id;
       login(token, user, pharmacy_id);
       navigate('/');
     } catch (err) {

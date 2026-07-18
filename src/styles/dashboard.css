@@ -1,0 +1,339 @@
+.dashboard-shell{
+  display:flex;
+  min-height:100vh;
+}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{
+  width:240px;
+  flex-shrink:0;
+  background:var(--emerald-deep);
+  color:#eef7f4;
+  display:flex;
+  flex-direction:column;
+  padding:24px 0;
+}
+
+.sidebar-brand{
+  padding:0 20px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  border-bottom:1px solid rgba(255,255,255,0.12);
+  margin-bottom:16px;
+}
+
+.sidebar-brand-mark{
+  font-family:'Source Serif 4', serif;
+  font-weight:700;
+  font-size:19px;
+  letter-spacing:0.02em;
+}
+
+.sidebar-brand-sub{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.12em;
+  color:#9fd6c6;
+}
+
+.sidebar-pharmacy{
+  padding:0 20px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.sidebar-pharmacy-label{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  color:#7fb6a6;
+}
+
+.sidebar-pharmacy-name{
+  font-size:14px;
+  font-weight:600;
+}
+
+.sidebar-nav{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  padding:0 12px;
+  flex:1;
+}
+
+.sidebar-link{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:6px;
+  text-decoration:none;
+  color:#cfe8e0;
+  font-size:13.5px;
+  transition:background 0.15s ease;
+}
+
+.sidebar-link:hover{
+  background:rgba(255,255,255,0.06);
+}
+
+.sidebar-link.active{
+  background:var(--emerald);
+  color:#ffffff;
+}
+
+.sidebar-link-tag{
+  font-size:10.5px;
+  color:#9fd6c6;
+  min-width:44px;
+}
+
+.sidebar-link.active .sidebar-link-tag{
+  color:#d7f3ea;
+}
+
+.sidebar-link-label{
+  flex:1;
+}
+
+.sidebar-link-status{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+.sidebar-link-status.built{
+  background:#4ade80;
+}
+
+.sidebar-link-status.planned{
+  background:rgba(255,255,255,0.25);
+}
+
+.sidebar-footer{
+  padding:16px 20px 0;
+  border-top:1px solid rgba(255,255,255,0.12);
+  margin-top:16px;
+  font-size:10px;
+  color:#5f8f80;
+}
+
+/* ---------- TOPBAR ---------- */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 32px;
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+}
+
+.topbar-role{
+  font-size:11px;
+  color:var(--sage);
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  background:var(--tag-bg);
+  padding:4px 10px;
+  border-radius:20px;
+}
+
+.topbar-user{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  font-size:13.5px;
+  color:var(--ink-soft);
+}
+
+.topbar-logout{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--ink-soft);
+  padding:6px 14px;
+  border-radius:6px;
+  font-size:13px;
+}
+
+.topbar-logout:hover{
+  border-color:var(--brick);
+  color:var(--brick);
+}
+
+/* ---------- MAIN CONTENT ---------- */
+.dashboard-main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.dashboard-content{
+  padding:32px;
+  flex:1;
+}
+
+/* ---------- MODULE PLACEHOLDER ---------- */
+.module-placeholder{
+  border:1px dashed var(--line);
+  border-radius:8px;
+  padding:48px 32px;
+  text-align:center;
+  color:var(--sage);
+  max-width:480px;
+}
+
+.module-placeholder .tag{
+  display:inline-block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  background:var(--tag-bg);
+  color:var(--emerald-deep);
+  padding:3px 10px;
+  border-radius:20px;
+  margin-bottom:14px;
+}
+
+.module-placeholder h2{
+  font-size:20px;
+  color:var(--ink);
+  margin-bottom:8px;
+}
+
+.module-placeholder p{
+  font-size:13.5px;
+  margin:0;
+}
+
+/* ---------- ADMIN OVERVIEW ---------- */
+.admin-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:16px;
+  max-width:760px;
+}
+
+.admin-card{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:20px;
+}
+
+.admin-card-label{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--sage);
+  margin-bottom:8px;
+}
+
+.admin-card-value{
+  font-family:'Source Serif 4', serif;
+  font-size:22px;
+  color:var(--emerald-deep);
+  font-weight:700;
+}
+
+/* ---------- LOGIN ---------- */
+.login-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--emerald-deep);
+}
+
+.login-form{
+  background:var(--paper);
+  padding:40px;
+  border-radius:12px;
+  width:100%;
+  max-width:360px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.login-form h1{
+  font-size:24px;
+  color:var(--emerald-deep);
+  margin-bottom:4px;
+}
+
+.login-sub{
+  color:var(--sage);
+  font-size:13px;
+  margin:0 0 20px;
+}
+
+.login-form label{
+  font-size:12px;
+  color:var(--ink-soft);
+  margin-top:12px;
+  margin-bottom:4px;
+}
+
+.login-form input{
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  font-size:14px;
+  font-family:inherit;
+}
+
+.login-form input:focus{
+  outline:2px solid var(--emerald);
+  outline-offset:1px;
+  border-color:var(--emerald);
+}
+
+.login-form button{
+  margin-top:20px;
+  background:var(--emerald);
+  color:#fff;
+  border:none;
+  padding:11px;
+  border-radius:6px;
+  font-size:14px;
+  font-weight:600;
+}
+
+.login-form button:disabled{
+  opacity:0.6;
+  cursor:default;
+}
+
+.login-error{
+  background:#f7ece9;
+  color:var(--brick);
+  padding:10px 12px;
+  border-radius:6px;
+  font-size:13px;
+  margin-bottom:4px;
+}
+
+@media (max-width: 720px){
+  .dashboard-shell{
+    flex-direction:column;
+  }
+  .sidebar{
+    width:100%;
+    flex-direction:row;
+    overflow-x:auto;
+    padding:12px;
+  }
+  .sidebar-brand, .sidebar-pharmacy, .sidebar-footer{
+    display:none;
+  }
+  .sidebar-nav{
+    flex-direction:row;
+    padding:0;
+  }
+}

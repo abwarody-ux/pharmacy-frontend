@@ -3,6 +3,11 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import SsoHandler from './pages/SsoHandler';
 import Dashboard from './pages/Dashboard';
+import AdminPage from './pages/modules/AdminPage';
+import ProductsPage from './pages/modules/ProductsPage';
+import PurchasesPage from './pages/modules/PurchasesPage';
+import StockPage from './pages/modules/StockPage';
+import PosPage from './pages/modules/PosPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -23,7 +28,14 @@ function AppRoutes() {
             <Dashboard />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<Navigate to="/administration" replace />} />
+        <Route path="administration" element={<AdminPage />} />
+        <Route path="produits" element={<ProductsPage />} />
+        <Route path="achats" element={<PurchasesPage />} />
+        <Route path="stocks" element={<StockPage />} />
+        <Route path="pos" element={<PosPage />} />
+      </Route>
     </Routes>
   );
 }
