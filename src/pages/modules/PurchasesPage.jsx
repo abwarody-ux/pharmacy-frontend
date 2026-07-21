@@ -8,6 +8,7 @@ import { listProducts, searchProducts } from '../../services/products';
 import { listStockReceiptApprovals, approveStockReceipt } from '../../services/priceVariance';
 import { getActivePharmacy } from '../../services/pharmacy';
 import { connectPharmacySocket, getPharmacySocket } from '../../sockets/pharmacySocket';
+import PurchaseOrderPreviewModal from '../../components/PurchaseOrderPreviewModal';
 
 const emptyRequestForm = { product_id: '', quantity: '', estimated_unit_price: '', notes: '', display_currency: 'USD' };
 const emptyReceiveForm = {
@@ -77,9 +78,6 @@ export default function PurchasesPage() {
   const [bonusError, setBonusError] = useState('');
   const [submittingBonus, setSubmittingBonus] = useState(false);
 
-  // Panier multi-produits : chaque ligne est ajoutee localement puis soumise en un seul
-  // appel batch. Le backend valide tout en dry-run avant creation - en cas d'echec, les
-  // erreurs reviennent par index de ligne et restent affichees jusqu'a correction.
   const [cart, setCart] = useState([]);
   const [cartErrors, setCartErrors] = useState({});
   const [cartGlobalError, setCartGlobalError] = useState('');
@@ -89,6 +87,10 @@ export default function PurchasesPage() {
   const [cartLineForm, setCartLineForm] = useState(emptyCartLineForm);
   const [cartLineQuery, setCartLineQuery] = useState('');
   const [cartLineResults, setCartLineResults] = useState([]);
+
+  // Apercu du bon de commande : un seul modal reutilise, ouvert avec le batch_id concerne,
+  // accessible depuis la liste des Demandes (une ligne par batch) ou juste apres soumission du panier
+  const [previewBatchId, setPreviewBatchId] = useState(null);
 
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const dragState = useRef({ dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 });
@@ -305,8 +307,6 @@ export default function PurchasesPage() {
     }
   };
 
-  // --- Panier multi-produits ---
-
   const openAddCartLine = () => {
     setEditingCartIndex(null);
     setCartLineForm(emptyCartLineForm);
@@ -434,8 +434,12 @@ export default function PurchasesPage() {
       });
       setCart([]);
       setResultMessage((result.requests?.length || 0) + ' demande(s) d\'achat creee(s) depuis le panier.');
-      setTab('requests');
       load(true);
+      if (result.batch_id) {
+        setPreviewBatchId(result.batch_id);
+      } else {
+        setTab('requests');
+      }
     } catch (err) {
       const data = err.response?.data;
       if (data?.errors?.length) {
@@ -452,6 +456,10 @@ export default function PurchasesPage() {
   };
 
   const cartTotalCdf = cart.reduce((sum, c) => sum + c.quantity * c.estimated_unit_price_cdf, 0);
+
+  // Un seul bouton "Bon de commande" par batch dans la liste des demandes, meme si
+  // plusieurs lignes partagent le meme batch_id
+  const uniqueBatchIds = [...new Set(requests.filter((r) => r.batch_id).map((r) => r.batch_id))];
 
   const handleDragMove = (e) => {
     if (!dragState.current.dragging) return;
@@ -512,52 +520,78 @@ export default function PurchasesPage() {
       </div>
 
       {tab === 'requests' && (
-        <div className="data-table-wrap">
-          {loading ? null : requests.length === 0 ? (
-            <div className="empty-state">Aucune demande d'achat.</div>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Produit</th>
-                  <th className="num">Quantite</th>
-                  <th className="num">Total estime</th>
-                  <th>Statut</th>
-                  <th>Ecart de prix</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((r) => (
-                  <tr key={r.id}>
-                    <td>{productName(r.product_id)}</td>
-                    <td className="num">{r.quantity}</td>
-                    <td className="num">{Number(r.estimated_total).toLocaleString('fr-FR')} CDF</td>
-                    <td><StatusBadge status={r.status} /></td>
-                    <td>{r.price_variance ? <span className="badge-status danger">Ecart detecte</span> : '—'}</td>
-                    <td className="row-actions">
-                      {r.status === 'PENDING' && r.requested_by !== user?.id && (!r.price_variance || isFinance) && (
-                        <>
-                          <button type="button" className="table-link-btn accent" onClick={() => handleApprove(r, true)}>
-                            Approuver
-                          </button>
-                          <button type="button" className="table-link-btn warn" onClick={() => handleApprove(r, false)}>
-                            Rejeter
-                          </button>
-                        </>
-                      )}
-                      {r.status === 'PENDING' && r.requested_by !== user?.id && r.price_variance && !isFinance && (
-                        <span className="hint-text">Ecart de prix - Finance uniquement</span>
-                      )}
-                      {r.status === 'PENDING' && r.requested_by === user?.id && (
-                        <span className="hint-text">En attente d'un autre validateur</span>
-                      )}
-                    </td>
+        <div>
+          {uniqueBatchIds.length > 0 && (
+            <div className="data-table-wrap" style={{ marginBottom: '16px' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Panier groupe</th>
+                    <th></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {uniqueBatchIds.map((bId) => (
+                    <tr key={bId}>
+                      <td className="mono">BC-{bId.slice(0, 8).toUpperCase()}</td>
+                      <td className="row-actions">
+                        <button type="button" className="table-link-btn accent" onClick={() => setPreviewBatchId(bId)}>
+                          Voir le bon de commande
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
+          <div className="data-table-wrap">
+            {loading ? null : requests.length === 0 ? (
+              <div className="empty-state">Aucune demande d'achat.</div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th className="num">Quantite</th>
+                    <th className="num">Total estime</th>
+                    <th>Statut</th>
+                    <th>Ecart de prix</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((r) => (
+                    <tr key={r.id}>
+                      <td>{productName(r.product_id)}</td>
+                      <td className="num">{r.quantity}</td>
+                      <td className="num">{Number(r.estimated_total).toLocaleString('fr-FR')} CDF</td>
+                      <td><StatusBadge status={r.status} /></td>
+                      <td>{r.price_variance ? <span className="badge-status danger">Ecart detecte</span> : '—'}</td>
+                      <td className="row-actions">
+                        {r.status === 'PENDING' && r.requested_by !== user?.id && (!r.price_variance || isFinance) && (
+                          <>
+                            <button type="button" className="table-link-btn accent" onClick={() => handleApprove(r, true)}>
+                              Approuver
+                            </button>
+                            <button type="button" className="table-link-btn warn" onClick={() => handleApprove(r, false)}>
+                              Rejeter
+                            </button>
+                          </>
+                        )}
+                        {r.status === 'PENDING' && r.requested_by !== user?.id && r.price_variance && !isFinance && (
+                          <span className="hint-text">Ecart de prix - Finance uniquement</span>
+                        )}
+                        {r.status === 'PENDING' && r.requested_by === user?.id && (
+                          <span className="hint-text">En attente d'un autre validateur</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 
@@ -712,6 +746,14 @@ export default function PurchasesPage() {
             </table>
           )}
         </div>
+      )}
+
+      {previewBatchId && (
+        <PurchaseOrderPreviewModal
+          batchId={previewBatchId}
+          pharmacyId={activePharmacyId}
+          onClose={() => setPreviewBatchId(null)}
+        />
       )}
 
       {showRequestModal && (
