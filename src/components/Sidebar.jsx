@@ -2,10 +2,11 @@ import { NavLink } from 'react-router-dom';
 
 const MODULES = [
   { code: 'MOD-01', label: 'Administration', path: '/administration', status: 'built' },
-  { code: 'MOD-02', label: 'Referentiel Produits', path: '/produits', status: 'planned' },
-  { code: 'MOD-03', label: 'Achats', path: '/achats', status: 'planned' },
-  { code: 'MOD-04', label: 'Stocks', path: '/stocks', status: 'planned' },
-  { code: 'MOD-05', label: 'Point de Vente', path: '/pos', status: 'planned' },
+  { code: 'MOD-02', label: 'Referentiel Produits', path: '/produits', status: 'built' },
+  { code: 'MOD-03', label: 'Achats', path: '/achats', status: 'built' },
+  { code: 'MOD-04', label: 'Stocks', path: '/stocks', status: 'built' },
+  { code: 'MOD-05', label: 'Point de Vente', path: '/pos', status: 'built' },
+  { code: 'MOD-06', label: 'Patients', path: '/patients', status: 'built' },
 ];
 
 export default function Sidebar({ pharmacyName }) {
@@ -15,14 +16,12 @@ export default function Sidebar({ pharmacyName }) {
         <span className="sidebar-brand-mark">KASMOK</span>
         <span className="sidebar-brand-sub">Pharmacy</span>
       </div>
-
       {pharmacyName && (
         <div className="sidebar-pharmacy">
           <span className="sidebar-pharmacy-label">Agence</span>
           <span className="sidebar-pharmacy-name">{pharmacyName}</span>
         </div>
       )}
-
       <nav className="sidebar-nav">
         {MODULES.map((mod) => (
           <NavLink
@@ -36,7 +35,6 @@ export default function Sidebar({ pharmacyName }) {
           </NavLink>
         ))}
       </nav>
-
       <div className="sidebar-footer">
         <span className="mono">BRS-KASMOK-PHARMACY-P1</span>
       </div>

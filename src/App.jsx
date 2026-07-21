@@ -8,6 +8,7 @@ import ProductsPage from './pages/modules/ProductsPage';
 import PurchasesPage from './pages/modules/PurchasesPage';
 import StockPage from './pages/modules/StockPage';
 import PosPage from './pages/modules/PosPage';
+import PatientsPage from './pages/modules/PatientsPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="achats" element={<PurchasesPage />} />
         <Route path="stocks" element={<StockPage />} />
         <Route path="pos" element={<PosPage />} />
+        <Route path="patients" element={<PatientsPage />} />
       </Route>
     </Routes>
   );
