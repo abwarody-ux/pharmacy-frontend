@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { listPatients } from '../../services/patients';
-import { createPrescription, getPrescriptionsByPatient, validatePrescription } from '../../services/prescriptions';
+import {
+  createPrescription, getPrescriptionsByPatient, validatePrescription,
+  uploadPrescriptionImage, getPrescriptionImageUrl,
+} from '../../services/prescriptions';
 import { searchProducts } from '../../services/products';
 
 const PRESCRIPTION_ROLES = ['PHARMACY_ADMIN', 'PHARMACY_TITULAIRE'];
@@ -22,6 +25,51 @@ function formatDateTime(dateStr) {
   return new Date(dateStr).toLocaleString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+// Redimensionne et recompresse une image cote navigateur avant envoi, pour rester sous
+// la limite du bucket (2 Mo) meme avec une photo brute de telephone. Les PDF ne sont pas
+// recompresses (juste verifies), l'API Canvas ne s'applique qu'aux images.
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+function compressImage(file, maxDimension = 1600, startQuality = 0.8) {
+  return new Promise((resolve, reject) => {
+    if (file.type === 'application/pdf') {
+      if (file.size > MAX_UPLOAD_BYTES) reject(new Error('Le PDF depasse 2 Mo.'));
+      else resolve(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) { height = Math.round(height * (maxDimension / width)); width = maxDimension; }
+          else { width = Math.round(width * (maxDimension / height)); height = maxDimension; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+        const tryQuality = (q) => {
+          canvas.toBlob((blob) => {
+            if (!blob) { reject(new Error('Compression echouee.')); return; }
+            if (blob.size > MAX_UPLOAD_BYTES && q > 0.3) {
+              tryQuality(q - 0.15);
+            } else {
+              resolve(new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+            }
+          }, 'image/jpeg', q);
+        };
+        tryQuality(startQuality);
+      };
+      img.onerror = () => reject(new Error("Impossible de lire l'image."));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Lecture du fichier echouee.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 const emptyLineForm = { product_id: '', product_name: '', dci_text: '', dosage: '', posology: '', duration: '', quantity: '' };
 
 export default function PrescriptionsPage() {
@@ -38,7 +86,10 @@ export default function PrescriptionsPage() {
   // Creation
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createLines, setCreateLines] = useState([]);
-  const [imageUrl, setImageUrl] = useState('');
+  const [imagePath, setImagePath] = useState('');
+  const [imagePreviewName, setImagePreviewName] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState('');
   const [ocrText, setOcrText] = useState('');
   const [showLineForm, setShowLineForm] = useState(false);
   const [lineForm, setLineForm] = useState(emptyLineForm);
@@ -54,6 +105,7 @@ export default function PrescriptionsPage() {
   const [detailLines, setDetailLines] = useState([]);
   const [detailError, setDetailError] = useState('');
   const [submittingValidation, setSubmittingValidation] = useState(false);
+  const [loadingImageUrl, setLoadingImageUrl] = useState(false);
 
   useEffect(() => {
     if (!activePharmacyId) return;
@@ -82,13 +134,33 @@ export default function PrescriptionsPage() {
 
   const openCreateModal = () => {
     setCreateLines([]);
-    setImageUrl('');
+    setImagePath('');
+    setImagePreviewName('');
+    setImageError('');
     setOcrText('');
     setShowLineForm(false);
     setLineForm(emptyLineForm);
     setEditingLineIndex(null);
     setCreateError('');
     setShowCreateModal(true);
+  };
+
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageError('');
+    setImagePath('');
+    setUploadingImage(true);
+    try {
+      const compressed = await compressImage(file);
+      const result = await uploadPrescriptionImage(activePharmacyId, compressed);
+      setImagePath(result.path);
+      setImagePreviewName(file.name);
+    } catch (err) {
+      setImageError(err.response?.data?.message || err.message || "Erreur lors de l'envoi de l'image.");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const openAddLine = () => {
@@ -151,7 +223,7 @@ export default function PrescriptionsPage() {
     try {
       await createPrescription(activePharmacyId, {
         patient_id: selectedPatient.id,
-        image_url: imageUrl.trim() || undefined,
+        image_url: imagePath || undefined,
         ocr_raw_text: ocrText.trim() || undefined,
         lines: createLines.map((l) => ({
           product_id: l.product_id || undefined,
@@ -179,6 +251,23 @@ export default function PrescriptionsPage() {
     setDetailLines((prescription.prescription_lines || []).map((l) => ({ ...l })));
     setDetailError('');
     setShowDetailModal(true);
+  };
+
+  const handleViewImage = async () => {
+    setLoadingImageUrl(true);
+    setDetailError('');
+    try {
+      const result = await getPrescriptionImageUrl(activePharmacyId, activePrescription.id);
+      if (result.signed_url) {
+        window.open(result.signed_url, '_blank');
+      } else {
+        setDetailError('Aucune image associee a cette ordonnance.');
+      }
+    } catch (err) {
+      setDetailError(err.response?.data?.message || "Erreur lors de l'ouverture de l'image.");
+    } finally {
+      setLoadingImageUrl(false);
+    }
   };
 
   const updateDetailLine = (index, field) => (e) => {
@@ -399,8 +488,11 @@ export default function PrescriptionsPage() {
               <>
                 <div className="form-grid" style={{ marginTop: '16px' }}>
                   <div className="form-field full">
-                    <label>URL de l'image (optionnel - upload a venir)</label>
-                    <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
+                    <label>Photo/scan de l'ordonnance (optionnel - image ou PDF, max 2 Mo)</label>
+                    <input type="file" accept="image/*,application/pdf" onChange={handleImageSelect} disabled={uploadingImage} />
+                    {uploadingImage && <span className="hint-text">Compression et envoi en cours...</span>}
+                    {imageError && <div className="form-error">{imageError}</div>}
+                    {imagePath && !uploadingImage && <span className="hint-text">Fichier envoye : {imagePreviewName}</span>}
                   </div>
                   <div className="form-field full">
                     <label>Texte brut (optionnel)</label>
@@ -409,7 +501,7 @@ export default function PrescriptionsPage() {
                 </div>
                 <div className="modal-actions">
                   <button type="button" className="modal-cancel" onClick={() => setShowCreateModal(false)}>Annuler</button>
-                  <button type="button" className="module-primary-btn" disabled={submittingCreate} onClick={handleCreateSubmit}>
+                  <button type="button" className="module-primary-btn" disabled={submittingCreate || uploadingImage} onClick={handleCreateSubmit}>
                     {submittingCreate ? 'Envoi...' : 'Creer l\'ordonnance'}
                   </button>
                 </div>
@@ -427,6 +519,11 @@ export default function PrescriptionsPage() {
               Statut : <StatusBadge status={activePrescription.status} /><br />
               Substance controlee : {activePrescription.is_controlled_substance ? 'Oui' : 'Non'}
             </p>
+            {activePrescription.image_url && (
+              <button type="button" className="table-link-btn accent" disabled={loadingImageUrl} onClick={handleViewImage} style={{ marginBottom: '12px' }}>
+                {loadingImageUrl ? 'Ouverture...' : "Voir la photo/scan de l'ordonnance"}
+              </button>
+            )}
             {detailError && <div className="form-error">{detailError}</div>}
 
             {(() => {
