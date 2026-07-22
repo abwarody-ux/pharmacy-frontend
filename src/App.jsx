@@ -11,6 +11,7 @@ import PosPage from './pages/modules/PosPage';
 import PatientsPage from './pages/modules/PatientsPage';
 import PrescriptionsPage from './pages/modules/PrescriptionsPage';
 import ProformasPage from './pages/modules/ProformasPage';
+import PriceRevaluationsPage from './pages/modules/PriceRevaluationsPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -41,6 +42,7 @@ function AppRoutes() {
         <Route path="patients" element={<PatientsPage />} />
         <Route path="ordonnances" element={<PrescriptionsPage />} />
         <Route path="proformas" element={<ProformasPage />} />
+        <Route path="reevaluations" element={<PriceRevaluationsPage />} />
       </Route>
     </Routes>
   );
