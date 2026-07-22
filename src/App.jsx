@@ -15,6 +15,7 @@ import PriceRevaluationsPage from './pages/modules/PriceRevaluationsPage';
 import ExpensesPage from './pages/modules/ExpensesPage';
 import ReportsPage from './pages/modules/ReportsPage';
 import AnalyticsPage from './pages/modules/AnalyticsPage';
+import AiPage from './pages/modules/AiPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="charges" element={<ExpensesPage />} />
         <Route path="rapports" element={<ReportsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="ia" element={<AiPage />} />
       </Route>
     </Routes>
   );
