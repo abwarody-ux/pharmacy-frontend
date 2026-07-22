@@ -12,6 +12,7 @@ const MODULES = [
   { code: 'MOD-09', label: 'Reevaluations de prix', path: '/reevaluations', status: 'built' },
   { code: 'MOD-10', label: 'Charges', path: '/charges', status: 'built' },
   { code: 'MOD-11', label: 'Rapports', path: '/rapports', status: 'built' },
+  { code: 'MOD-12', label: 'Analytics', path: '/analytics', status: 'built' },
 ];
 
 export default function Sidebar({ pharmacyName }) {
