@@ -10,6 +10,7 @@ import StockPage from './pages/modules/StockPage';
 import PosPage from './pages/modules/PosPage';
 import PatientsPage from './pages/modules/PatientsPage';
 import PrescriptionsPage from './pages/modules/PrescriptionsPage';
+import ProformasPage from './pages/modules/ProformasPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route path="pos" element={<PosPage />} />
         <Route path="patients" element={<PatientsPage />} />
         <Route path="ordonnances" element={<PrescriptionsPage />} />
+        <Route path="proformas" element={<ProformasPage />} />
       </Route>
     </Routes>
   );
