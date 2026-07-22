@@ -7,6 +7,7 @@ const MODULES = [
   { code: 'MOD-04', label: 'Stocks', path: '/stocks', status: 'built' },
   { code: 'MOD-05', label: 'Point de Vente', path: '/pos', status: 'built' },
   { code: 'MOD-06', label: 'Patients', path: '/patients', status: 'built' },
+  { code: 'MOD-07', label: 'Ordonnances', path: '/ordonnances', status: 'built' },
 ];
 
 export default function Sidebar({ pharmacyName }) {
