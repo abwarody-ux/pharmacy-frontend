@@ -220,6 +220,7 @@ export default function PurchasesPage() {
       const validationDate = processedDates.length > 0 ? new Date(Math.max(...processedDates)).toISOString() : null;
       return {
         batchId,
+        reference: 'BC-' + batchId.slice(0, 8).toUpperCase(),
         description: "Demande d'achat du " + formatDateTime(submissionDate),
         total: lines.reduce((sum, l) => sum + Number(l.estimated_total), 0),
         varianceCount: lines.filter((l) => l.price_variance).length,
@@ -270,6 +271,10 @@ export default function PurchasesPage() {
       confirmed: true,
     }));
     setCart(newCart);
+    // Pre-remplit une reference vers le panier rejete d'origine - reste dans le systeme
+    // (colonne Commentaire de Demandes d'achat) mais n'apparait jamais sur le bon de
+    // commande imprimable, qui ne reprend pas ce champ.
+    setCartNotes('Resoumission suite au rejet du panier BC-' + group.batchId.slice(0, 8).toUpperCase() + '.');
     setLineLocalErrors({});
     setCartErrors({});
     setCartGlobalError('');
@@ -319,6 +324,7 @@ export default function PurchasesPage() {
 
   const openNewRequestModal = () => {
     setCart([]);
+    setCartNotes('');
     setLineLocalErrors({});
     setCartErrors({});
     setCartGlobalError('');
@@ -597,6 +603,7 @@ export default function PurchasesPage() {
             estimated_unit_price: priceInCdf,
           };
         }),
+        notes: cartNotes.trim() || undefined,
       });
       setShowNewRequestModal(false);
       setCart([]);
@@ -687,6 +694,7 @@ export default function PurchasesPage() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>N° Panier</th>
                   <th>Description</th>
                   <th className="num">Total</th>
                   <th>Ecart de prix</th>
@@ -700,6 +708,7 @@ export default function PurchasesPage() {
               <tbody>
                 {requestGroups.map((group) => (
                   <tr key={group.batchId}>
+                    <td className="mono">{group.reference}</td>
                     <td>{group.description}</td>
                     <td className="num">{group.total.toLocaleString('fr-FR')} CDF</td>
                     <td>{group.varianceCount > 0 ? <span className="badge-status danger">{group.varianceCount} produit(s)</span> : '—'}</td>
@@ -1098,6 +1107,15 @@ export default function PurchasesPage() {
                   </tbody>
                 </table>
               )}
+            </div>
+
+            <div className="form-field full" style={{ marginTop: '12px' }}>
+              <label>Commentaire (optionnel)</label>
+              <input
+                value={cartNotes}
+                onChange={(e) => setCartNotes(e.target.value)}
+                placeholder="ex: urgence rupture, remplace le panier rejete BC-XXXX..."
+              />
             </div>
 
             <div className="modal-actions" style={{ justifyContent: 'space-between', marginTop: '16px' }}>
